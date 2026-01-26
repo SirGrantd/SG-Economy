@@ -26,7 +26,7 @@ import net.sirgrantd.sg_economy.SGEconomyMod;
 
 @EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
 public class CoinsBagCapabilities {
-    public static final DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES = DeferredRegister.create(NeoForgeRegistries.Keys.ATTACHMENT_TYPES, SGEconomyMod.MOD_ID);
+    public static final DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES = DeferredRegister.create(NeoForgeRegistries.Keys.ATTACHMENT_TYPES, SGEconomyMod.MG_COINS_ID);
     public static final Supplier<AttachmentType<CoinsInBag>> COINS_IN_BAG = ATTACHMENT_TYPES.register("coins_in_bag", () -> AttachmentType.serializable(() -> new CoinsInBag()).build());
 
     @SubscribeEvent
@@ -97,7 +97,7 @@ public class CoinsBagCapabilities {
     }
 
     public record CoinsInBagSyncPayload(CoinsInBag data) implements CustomPacketPayload {
-        public static final Type<CoinsInBagSyncPayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(SGEconomyMod.MOD_ID, "coins_in_bag_sync"));
+        public static final Type<CoinsInBagSyncPayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(SGEconomyMod.MG_COINS_ID, "coins_in_bag_sync"));
         public static final StreamCodec<RegistryFriendlyByteBuf, CoinsInBagSyncPayload> STREAM_CODEC = StreamCodec.of(
             (RegistryFriendlyByteBuf buffer, CoinsInBagSyncPayload message) -> buffer.writeNbt(message.data().serializeNBT(buffer.registryAccess())),
             (RegistryFriendlyByteBuf buffer) -> {

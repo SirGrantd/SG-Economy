@@ -14,10 +14,14 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.util.Tuple;
+import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.config.ModConfig;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.fml.util.thread.SidedThreadGroups;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
@@ -25,27 +29,31 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.handling.IPayloadHandler;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import net.sirgrantd.sg_economy.capabilities.CoinsBagCapabilities;
+import net.sirgrantd.sg_economy.config.ServerConfig;	
 
 @Mod("sg_economy")
 public class SGEconomyMod {
 	public static final Logger LOGGER = LogManager.getLogger(SGEconomyMod.class);
 	public static final String MOD_ID = "sg_economy";
+	public static final String MG_COINS_ID = "magic_coins";
 
 	public SGEconomyMod(IEventBus modEventBus, ModContainer modContainer) {
 		NeoForge.EVENT_BUS.register(SGEconomyMod.class);
 		modEventBus.addListener(this::registerNetworking);
 
 		CoinsBagCapabilities.ATTACHMENT_TYPES.register(modEventBus);
+		
+		modContainer.registerConfig(ModConfig.Type.SERVER, ServerConfig.Config.SPEC, String.format("%s-server.toml", MOD_ID));
 	}
 
-	// @EventBusSubscriber(modid = MOD_ID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
-	// public static class ClientProxy {
+	@EventBusSubscriber(modid = MOD_ID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
+	public static class ClientProxy {
 		
-	// 	@SubscribeEvent
-	// 	public static void setupClient(FMLClientSetupEvent event) {
-	// 		// NeoForge.EVENT_BUS.register(new MagicCoinsButtonInventory());
-	// 	}
-	// }
+		@SubscribeEvent
+		public static void setupClient(FMLClientSetupEvent event) {
+			// NeoForge.EVENT_BUS.register(new MagicCoinsButtonInventory());
+		}
+	}
 
 	private static boolean networkingRegistered = false;
 	private static final Map<CustomPacketPayload.Type<?>, NetworkMessage<?>> MESSAGES = new HashMap<>();
@@ -74,7 +82,7 @@ public class SGEconomyMod {
 	}
 
 	@SubscribeEvent
-	public void tick(ServerTickEvent.Post event) {
+	public static void tick(ServerTickEvent.Post event) {
 		List<Tuple<Runnable, Integer>> actions = new ArrayList<>();
 		workQueue.forEach(work -> {
 			work.setB(work.getB() - 1);

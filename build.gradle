@@ -1,0 +1,80 @@
+plugins {
+    id 'eclipse'
+    id 'net.neoforged.moddev' version '2.0.74'
+}
+
+version = mod_version
+group = mod_group
+
+base.archivesName = mod_id
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+neoForge {
+    version = "21.1.93"
+
+    runs {
+        client {
+            client()
+            jvmArgument "-Xms512m"
+            jvmArgument "-Xmx2G"
+            jvmArgument "-XX:+UseG1GC"
+            jvmArgument "-Dfile.encoding=UTF-8"
+            gameDirectory = file('run/main_client')
+            programArgument "--username=MainDev"
+        }
+        client2 {
+            client()
+            jvmArgument "-Xms512m"
+            jvmArgument "-Xmx2G"
+            jvmArgument "-XX:+UseG1GC"
+            jvmArgument "-Dfile.encoding=UTF-8"
+            gameDirectory = file('run/off_client')
+            programArgument "--username=OffDev"
+        }
+        server {
+            server()
+            gameDirectory = file('run/server')
+        }
+
+        configureEach {
+            systemProperty 'forge.logging.markers', 'REGISTRIES'
+            logLevel = org.slf4j.event.Level.DEBUG
+        }
+    }
+
+    mods {
+        "${mod_id}" {
+            sourceSet sourceSets.main
+        }
+    }
+}
+
+tasks.withType(ProcessResources).configureEach {
+    var replaceProperties = [
+        // CONFIGS GENERAL
+        loader_version_range: loader_version_range,
+        neo_version_range: neo_version_range,
+        minecraft_version_range: minecraft_version_range,
+        // CONFIGS MOD
+        mod_version: mod_version,
+        mod_id: mod_id,
+        mod_group: mod_group,
+        mod_name: mod_name,
+        mod_license: mod_license,
+        mod_authors: mod_authors,
+        mod_description: mod_description,
+        logo_file: logo_file,
+    ]
+    inputs.properties replaceProperties
+
+    filesMatching(['META-INF/neoforge.mods.toml']) {
+        expand replaceProperties
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+apply from: 'sirgrantd.gradle'

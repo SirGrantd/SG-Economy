@@ -2,7 +2,8 @@ package net.sirgrantd.sg_economy.api.economy;
 
 import net.minecraft.world.entity.Entity;
 
-public interface SGEconomyProvider {
+public interface EconomyProvider {
+    boolean isDecimalCurrency();
     boolean hasCapability(Entity entity);
     double getCurrency(Entity entity);
     void setCurrency(Entity entity, double amount);

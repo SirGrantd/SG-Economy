@@ -44,10 +44,12 @@ public class ServerConfig {
 
     public static void bakeConfig() {
         isDecimalCurrency = Config.DECIMAL_CURRENCY.get();
+        percentageCoinsSaveOnDeath = Config.PERCENTAGE_COINS_SAVE_ON_DEATH.get();
     }
 
     private static void onConfigUnload() {
         isDecimalCurrency = true;
+        percentageCoinsSaveOnDeath = 100;
     }
 
     @SubscribeEvent

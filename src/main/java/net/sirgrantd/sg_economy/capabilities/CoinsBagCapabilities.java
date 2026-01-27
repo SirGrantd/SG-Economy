@@ -62,6 +62,7 @@ public class CoinsBagCapabilities {
             CoinsInBag original = event.getOriginal().getData(COINS_IN_BAG);
             CoinsInBag clone = new CoinsInBag();
             clone.valueTotalInCoins = original.valueTotalInCoins;
+            clone.valueTotalInCurrency = original.valueTotalInCurrency;
             clone.isCoinsLostOnDeath = original.isCoinsLostOnDeath;
             if (!event.isWasDeath()) {}
             event.getEntity().setData(COINS_IN_BAG, clone);
@@ -71,7 +72,7 @@ public class CoinsBagCapabilities {
     public static class CoinsInBag implements INBTSerializable<CompoundTag> {
         public int valueTotalInCoins = 0;
         public double valueTotalInCurrency = 0.0;
-        public boolean isCoinsLostOnDeath = false;
+        public boolean isCoinsLostOnDeath = true;
 
         @Override
         public CompoundTag serializeNBT(HolderLookup.Provider lookupProvider) {

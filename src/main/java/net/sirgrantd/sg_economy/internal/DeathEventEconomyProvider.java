@@ -1,12 +1,12 @@
 package net.sirgrantd.sg_economy.internal;
 
 import net.minecraft.world.entity.Entity;
-import net.sirgrantd.sg_economy.api.event.SGEventProvider;
+import net.sirgrantd.sg_economy.api.event.EconomyEventProvider;
 import net.sirgrantd.sg_economy.capabilities.CoinsBagCapabilities;
 import net.sirgrantd.sg_economy.capabilities.CoinsBagCapabilities.CoinsInBag;
 import net.sirgrantd.sg_economy.config.ServerConfig;
 
-public enum EventEconomyProvider implements SGEventProvider {
+public enum DeathEventEconomyProvider implements EconomyEventProvider {
     INSTANCE;
     
     public boolean isCoinsLostOnDeath(Entity entity) {

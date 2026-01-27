@@ -1,13 +1,18 @@
 package net.sirgrantd.sg_economy.internal;
 
 import net.minecraft.world.entity.Entity;
-import net.sirgrantd.sg_economy.api.economy.SGEconomyProvider;
+import net.sirgrantd.sg_economy.api.economy.EconomyProvider;
 import net.sirgrantd.sg_economy.capabilities.CoinsBagCapabilities;
 import net.sirgrantd.sg_economy.capabilities.CoinsBagCapabilities.CoinsInBag;
 import net.sirgrantd.sg_economy.config.ServerConfig;
 
-public enum BaseEconomyProvider implements SGEconomyProvider {
+public enum DefaultEconomyProvider implements EconomyProvider {
     INSTANCE;
+
+    @Override
+    public boolean isDecimalCurrency() {
+        return ServerConfig.isDecimalCurrency;
+    }
 
     @Override
     public boolean hasCapability(Entity entity) {
@@ -16,7 +21,7 @@ public enum BaseEconomyProvider implements SGEconomyProvider {
 
     @Override
     public double getCurrency(Entity entity) {
-        if (ServerConfig.isDecimalCurrency) {
+        if (isDecimalCurrency()) {
             return entity.getData(CoinsBagCapabilities.COINS_IN_BAG).valueTotalInCurrency;
         }       
         return (double) entity.getData(CoinsBagCapabilities.COINS_IN_BAG).valueTotalInCoins;
@@ -25,7 +30,7 @@ public enum BaseEconomyProvider implements SGEconomyProvider {
     @Override
     public void setCurrency(Entity entity, double amount) {
         CoinsInBag coinsInBag = entity.getData(CoinsBagCapabilities.COINS_IN_BAG);
-        if (ServerConfig.isDecimalCurrency) {
+        if (isDecimalCurrency()) {
             coinsInBag.valueTotalInCurrency = Math.max(0.0, amount);
         } else {
             coinsInBag.valueTotalInCoins = (int) Math.max(0, Math.floor(amount));
@@ -36,7 +41,7 @@ public enum BaseEconomyProvider implements SGEconomyProvider {
     @Override
     public void addCurrency(Entity entity, double amount) {
         CoinsInBag coinsInBag = entity.getData(CoinsBagCapabilities.COINS_IN_BAG);
-        if (ServerConfig.isDecimalCurrency) {
+        if (isDecimalCurrency()) {
             coinsInBag.valueTotalInCurrency = Math.max(0.0, getCurrency(entity) + amount);
         } else {
             coinsInBag.valueTotalInCoins = Math.max(0, getCoins(entity) + (int) amount);
@@ -47,7 +52,7 @@ public enum BaseEconomyProvider implements SGEconomyProvider {
     @Override
     public void removeCurrency(Entity entity, double amount) {
         CoinsInBag coinsInBag = entity.getData(CoinsBagCapabilities.COINS_IN_BAG);
-        if (ServerConfig.isDecimalCurrency) {
+        if (isDecimalCurrency()) {
             coinsInBag.valueTotalInCurrency = Math.max(0.0, getCurrency(entity) - amount);
         } else {
             coinsInBag.valueTotalInCoins = Math.max(0, getCoins(entity) - (int) amount);

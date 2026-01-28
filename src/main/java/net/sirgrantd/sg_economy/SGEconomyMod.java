@@ -29,6 +29,7 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.handling.IPayloadHandler;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import net.sirgrantd.sg_economy.capabilities.CoinsBagCapabilities;
+import net.sirgrantd.sg_economy.config.ClientConfig;
 import net.sirgrantd.sg_economy.config.ServerConfig;	
 
 @Mod("sg_economy")
@@ -44,6 +45,7 @@ public class SGEconomyMod {
 		CoinsBagCapabilities.ATTACHMENT_TYPES.register(modEventBus);
 		
 		modContainer.registerConfig(ModConfig.Type.SERVER, ServerConfig.Config.SPEC, String.format("%s-server.toml", MOD_ID));
+		modContainer.registerConfig(ModConfig.Type.CLIENT, ClientConfig.Config.SPEC, String.format("%s-client.toml", MOD_ID));
 	}
 
 	@EventBusSubscriber(modid = MOD_ID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)

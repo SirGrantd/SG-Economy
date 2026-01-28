@@ -12,12 +12,15 @@ public class ServerConfig {
 
     public static boolean isDecimalCurrency;
     public static int percentageCoinsSaveOnDeath;
+    public static boolean isActivePayCommand;
 
     public static class Config {
         public static final ModConfigSpec.Builder CONFIG_BUILDER = new ModConfigSpec.Builder();
+
         public static final ModConfigSpec.ConfigValue<Boolean> DECIMAL_CURRENCY;
         public static final ModConfigSpec.ConfigValue<Integer> PERCENTAGE_COINS_SAVE_ON_DEATH;
-        
+        public static final ModConfigSpec.ConfigValue<Boolean> IS_ACTIVE_PAY_COMMAND;
+
         static {
             CONFIG_BUILDER.push("ECONOMY SETTINGS");
             
@@ -36,6 +39,14 @@ public class ServerConfig {
             
             CONFIG_BUILDER.pop();
 
+            CONFIG_BUILDER.push("PAY COMMAND");
+
+            IS_ACTIVE_PAY_COMMAND = CONFIG_BUILDER
+                .comment("If true, the /coins pay command will be active.")
+                .define("isActivePayCommand", true);
+
+            CONFIG_BUILDER.pop();
+
             SPEC = CONFIG_BUILDER.build();
         }
 
@@ -45,11 +56,13 @@ public class ServerConfig {
     public static void bakeConfig() {
         isDecimalCurrency = Config.DECIMAL_CURRENCY.get();
         percentageCoinsSaveOnDeath = Config.PERCENTAGE_COINS_SAVE_ON_DEATH.get();
+        isActivePayCommand = Config.IS_ACTIVE_PAY_COMMAND.get();
     }
 
     private static void onConfigUnload() {
         isDecimalCurrency = true;
         percentageCoinsSaveOnDeath = 100;
+        isActivePayCommand = true;
     }
 
     @SubscribeEvent

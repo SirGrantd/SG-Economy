@@ -32,6 +32,7 @@ import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.sirgrantd.sg_economy.SGEconomyMod;
 import net.sirgrantd.sg_economy.api.util.CurrencyUtils;
+import net.sirgrantd.sg_economy.config.ServerConfig;
 import net.sirgrantd.sg_economy.internal.DefaultEconomyProvider;
 
 @EventBusSubscriber
@@ -50,7 +51,9 @@ public class EconomyCommand {
         if (players == null && world instanceof ServerLevel serverLevel) {
             players = FakePlayerFactory.getMinecraft(serverLevel);
         }
+
         if (players == null) {
+            arguments.getSource().sendSystemMessage(Component.translatable("command.coins.exception.player_not_found"));
             return 0;
         }
 
@@ -60,11 +63,15 @@ public class EconomyCommand {
                 try {
                     return EntityArgument.getEntity(arguments, "players");
                 } catch (CommandSyntaxException e) {
-                    e.printStackTrace();
                     return null;
                 }
             }
         }.getEntity();
+
+        if (player == null) {
+            arguments.getSource().sendSystemMessage(Component.translatable("command.coins.exception.player_not_found"));
+            return 0;
+        }
 
         if (DefaultEconomyProvider.INSTANCE.isDecimalCurrency()) {
             DefaultEconomyProvider.INSTANCE.addCurrency(player, amount);
@@ -90,7 +97,10 @@ public class EconomyCommand {
         if (players == null && world instanceof ServerLevel serverLevel) {
             players = FakePlayerFactory.getMinecraft(serverLevel);
         }
-        if (players != null) {
+
+        if (players == null) {
+            arguments.getSource().sendSystemMessage(Component.translatable("command.coins.exception.player_not_found"));
+            return 0;
         }
 
         double amount = DoubleArgumentType.getDouble(arguments, "amount");
@@ -99,11 +109,15 @@ public class EconomyCommand {
                 try {
                     return EntityArgument.getEntity(arguments, "players");
                 } catch (CommandSyntaxException e) {
-                    e.printStackTrace();
                     return null;
                 }
             }
         }.getEntity();
+
+        if (player == null) {
+            arguments.getSource().sendSystemMessage(Component.translatable("command.coins.exception.player_not_found"));
+            return 0;
+        }
 
         if (DefaultEconomyProvider.INSTANCE.isDecimalCurrency()) {
             DefaultEconomyProvider.INSTANCE.setCurrency(player, amount);
@@ -130,6 +144,7 @@ public class EconomyCommand {
             players = FakePlayerFactory.getMinecraft(serverLevel);
         }
         if (players == null) {
+            arguments.getSource().sendSystemMessage(Component.translatable("command.coins.exception.player_not_found"));
             return 0;
         }
 
@@ -139,17 +154,19 @@ public class EconomyCommand {
                 try {
                     return EntityArgument.getEntity(arguments, "players");
                 } catch (CommandSyntaxException e) {
-                    e.printStackTrace();
                     return null;
                 }
             }
         }.getEntity();
 
+        if (player == null) {
+            arguments.getSource().sendSystemMessage(Component.translatable("command.coins.exception.player_not_found"));
+            return 0;
+        }
+
         if (!CurrencyUtils.hasBalance(player, amount)) {
-            String message = Component.translatable(
-                    "command.coins.remove.insufficient_funds").getString();
-            arguments.getSource().sendSystemMessage(
-                    Component.literal("§c" + message));
+            arguments.getSource()
+                    .sendSystemMessage(Component.translatable("command.coins.exception.insufficient_funds"));
             return 0;
         }
 
@@ -179,6 +196,11 @@ public class EconomyCommand {
         }
 
         if (players == null) {
+            arguments.getSource().sendSystemMessage(Component.translatable("command.coins.exception.only_players"));
+            return 0;
+        }
+
+        if (player == null) {
             player = arguments.getSource().getEntity();
 
             if (player == null && arguments.getSource().getUnsidedLevel() instanceof ServerLevel serverLevel) {
@@ -186,27 +208,96 @@ public class EconomyCommand {
             }
         }
 
-        if (player != null) {
-            if (DefaultEconomyProvider.INSTANCE.isDecimalCurrency()) {
-                double balance = DefaultEconomyProvider.INSTANCE.getCurrency(player);
-
-                arguments.getSource().sendSystemMessage(Component.literal(
-                        String.format("%s: §a$%.2f", player.getName().getString(), balance)));
-            } else {
-                int balance = DefaultEconomyProvider.INSTANCE.getCoins(player);
-
-                arguments.getSource().sendSystemMessage(Component.literal(
-                        String.format("%s: §a$%d", player.getName().getString(), balance)));
-            }
+        if (player == null) {
+            arguments.getSource().sendSystemMessage(Component.translatable("command.coins.exception.player_not_found"));
+            return 0;
         }
 
+        if (DefaultEconomyProvider.INSTANCE.isDecimalCurrency()) {
+            double balance = DefaultEconomyProvider.INSTANCE.getCurrency(player);
+            String balanceString = String.format("%.2f", balance);
+
+            arguments.getSource().sendSystemMessage(Component.literal(
+                    String.format("%s: §a$%s", player.getName().getString(), balanceString)));
+        } else {
+            int balance = DefaultEconomyProvider.INSTANCE.getCoins(player);
+
+            arguments.getSource().sendSystemMessage(Component.literal(
+                    String.format("%s: §a$%d", player.getName().getString(), balance)));
+        }
+
+        return 1;
+    }
+
+    private static int payCurrency(CommandContext<CommandSourceStack> arguments) {
+        if (!ServerConfig.isActivePayCommand) {
+            arguments.getSource().sendSystemMessage(Component.translatable("command.coins.exception.disabled"));
+            return 0;
+        }
+
+        Entity senderEntity = arguments.getSource().getEntity();
+        if (!(senderEntity instanceof ServerPlayer sender)) {
+            arguments.getSource().sendSystemMessage(Component.translatable("command.coins.exception.only_players"));
+            return 0;
+        }
+
+        Entity targetEntity = new Object() {
+            public Entity getEntity() {
+                try {
+                    return EntityArgument.getEntity(arguments, "target");
+                } catch (CommandSyntaxException e) {
+                    return null;
+                }
+            }
+        }.getEntity();
+
+        if (!(targetEntity instanceof ServerPlayer target)) {
+            arguments.getSource()
+                    .sendSystemMessage(Component.translatable("command.coins.exception.target_not_online"));
+            return 0;
+        }
+
+        double amount = DoubleArgumentType.getDouble(arguments, "amount");
+
+        boolean isDecimal = DefaultEconomyProvider.INSTANCE.isDecimalCurrency();
+
+        double senderBalance = isDecimal
+                ? DefaultEconomyProvider.INSTANCE.getCurrency(sender)
+                : DefaultEconomyProvider.INSTANCE.getCoins(sender);
+
+        if (senderBalance < amount) {
+            arguments.getSource()
+                    .sendSystemMessage(Component.translatable("command.coins.exception.insufficient_funds"));
+            return 0;
+        }
+
+        if (isDecimal) {
+            DefaultEconomyProvider.INSTANCE.removeCurrency(sender, amount);
+            DefaultEconomyProvider.INSTANCE.addCurrency(target, amount);
+        } else {
+            int intAmount = (int) Math.round(amount);
+            DefaultEconomyProvider.INSTANCE.removeCoins(sender, intAmount);
+            DefaultEconomyProvider.INSTANCE.addCoins(target, intAmount);
+        }
+
+        String coinText = Component.translatable(
+                amount == 1 ? "text.coin" : "text.coins").getString();
+
+        String sentMsg = String.format("§aYou sent %s %s to %s.",
+                isDecimal ? String.format("%.2f", amount) : String.format("%d", Math.round(amount)), coinText,
+                target.getName().getString());
+        String receivedMsg = String.format("§aYou received %s %s from %s.",
+                isDecimal ? String.format("%.2f", amount) : String.format("%d", Math.round(amount)), coinText,
+                sender.getName().getString());
+
+        arguments.getSource().sendSystemMessage(Component.literal(sentMsg));
+        target.sendSystemMessage(Component.literal(receivedMsg));
         return 1;
     }
 
     private static int rankCoins(CommandContext<CommandSourceStack> arguments, int page) {
         MinecraftServer server = arguments.getSource().getServer();
 
-        // Map of online player UUIDs for quick lookup
         Map<String, PlayerOnlineInfo> playersOnlineMap = server.getPlayerList().getPlayers().stream()
                 .map(p -> new PlayerOnlineInfo(p, p.getUUID().toString()))
                 .collect(Collectors.toMap(PlayerOnlineInfo::uuid, p -> p));
@@ -216,7 +307,6 @@ public class EconomyCommand {
 
         boolean useDecimal = DefaultEconomyProvider.INSTANCE.isDecimalCurrency();
 
-        // Online players
         for (PlayerOnlineInfo onlineInfo : playersOnlineMap.values()) {
             Entity playerEntity = onlineInfo.player();
             double currency = DefaultEconomyProvider.INSTANCE.getCurrency(playerEntity);
@@ -224,7 +314,6 @@ public class EconomyCommand {
             ranking.add(new PlayerCoinsInfo(name, currency));
         }
 
-        // Offline
         File[] files = playerDataFolder.listFiles((dir, name) -> name.endsWith(".dat"));
         if (files != null) {
             for (File file : files) {
@@ -292,32 +381,28 @@ public class EconomyCommand {
     @SubscribeEvent
     public static void registerCoinsCommand(RegisterCommandsEvent event) {
         event.getDispatcher().register(Commands.literal("coins")
+
                 .then(Commands.literal("add")
                         .requires(s -> s.hasPermission(4))
                         .then(Commands.argument("players", EntityArgument.players())
                                 .then(Commands.argument("amount", DoubleArgumentType.doubleArg(0))
-                                        .executes(arguments -> {
-                                            return addCurrency(arguments);
-                                        }))))
+                                        .executes(arguments -> addCurrency(arguments)))))
+
                 .then(Commands.literal("set")
                         .requires(s -> s.hasPermission(4))
                         .then(Commands.argument("players", EntityArgument.players())
                                 .then(Commands.argument("amount", DoubleArgumentType.doubleArg(0))
-                                        .executes(arguments -> {
-                                            return setCurrency(arguments);
-                                        }))))
+                                        .executes(arguments -> setCurrency(arguments)))))
+
                 .then(Commands.literal("remove")
                         .requires(s -> s.hasPermission(4))
                         .then(Commands.argument("players", EntityArgument.players())
                                 .then(Commands.argument("amount", DoubleArgumentType.doubleArg(0))
-                                        .executes(arguments -> {
-                                            return removeCurrency(arguments);
-                                        }))))
+                                        .executes(arguments -> removeCurrency(arguments)))))
+
                 .then(Commands.literal("get")
                         .requires(s -> s.hasPermission(0))
-                        .executes(arguments -> {
-                            return getCurrency(arguments, null);
-                        })
+                        .executes(arguments -> getCurrency(arguments, null))
                         .then(Commands.argument("player", EntityArgument.player())
                                 .executes(arguments -> {
                                     Entity player = new Object() {
@@ -325,8 +410,6 @@ public class EconomyCommand {
                                             try {
                                                 return EntityArgument.getEntity(arguments, "player");
                                             } catch (CommandSyntaxException e) {
-                                                arguments.getSource()
-                                                        .sendSystemMessage(Component.literal("§cPlayer not found"));
                                                 return null;
                                             }
                                         }
@@ -334,10 +417,15 @@ public class EconomyCommand {
 
                                     return getCurrency(arguments, player);
                                 })))
+
+                .then(Commands.literal("pay")
+                        .requires(s -> s.hasPermission(0))
+                        .then(Commands.argument("target", EntityArgument.player())
+                                .then(Commands.argument("amount", DoubleArgumentType.doubleArg(0.01))
+                                        .executes(arguments -> payCurrency(arguments)))))
+
                 .then(Commands.literal("rank")
-                        .executes(arguments -> {
-                            return rankCoins(arguments, 1);
-                        })
+                        .executes(arguments -> rankCoins(arguments, 1))
                         .then(Commands.argument("page", IntegerArgumentType.integer(0))
                                 .requires(s -> s.hasPermission(0))
                                 .executes(arguments -> {
@@ -345,5 +433,4 @@ public class EconomyCommand {
                                     return rankCoins(arguments, page);
                                 }))));
     }
-
 }

@@ -65,6 +65,8 @@ tasks.withType(ProcessResources).configureEach {
         mod_authors: mod_authors,
         mod_description: mod_description,
         logo_file: logo_file,
+        // CONFIGS DEPENDENCIES
+        curios_version: curios_version
     ]
     inputs.properties replaceProperties
 

@@ -26,12 +26,15 @@ import net.sirgrantd.sg_economy.SGEconomyMod;
 
 @EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
 public class CoinsBagCapabilities {
-    public static final DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES = DeferredRegister.create(NeoForgeRegistries.Keys.ATTACHMENT_TYPES, SGEconomyMod.MG_COINS_ID);
-    public static final Supplier<AttachmentType<CoinsInBag>> COINS_IN_BAG = ATTACHMENT_TYPES.register("coins_in_bag", () -> AttachmentType.serializable(() -> new CoinsInBag()).build());
+    public static final DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES = DeferredRegister
+            .create(NeoForgeRegistries.Keys.ATTACHMENT_TYPES, SGEconomyMod.MG_COINS_ID);
+    public static final Supplier<AttachmentType<CoinsInBag>> COINS_IN_BAG = ATTACHMENT_TYPES.register("coins_in_bag",
+            () -> AttachmentType.serializable(() -> new CoinsInBag()).build());
 
     @SubscribeEvent
     public static void init(FMLCommonSetupEvent event) {
-        SGEconomyMod.addNetworkMessage(CoinsInBagSyncPayload.TYPE, CoinsInBagSyncPayload.STREAM_CODEC, CoinsInBagSyncPayload::handleData);
+        SGEconomyMod.addNetworkMessage(CoinsInBagSyncPayload.TYPE, CoinsInBagSyncPayload.STREAM_CODEC,
+                CoinsInBagSyncPayload::handleData);
     }
 
     @EventBusSubscriber
@@ -64,21 +67,22 @@ public class CoinsBagCapabilities {
             clone.valueTotalInCoins = original.valueTotalInCoins;
             clone.valueTotalInCurrency = original.valueTotalInCurrency;
             clone.isCoinsLostOnDeath = original.isCoinsLostOnDeath;
-            if (!event.isWasDeath()) {}
+            if (!event.isWasDeath()) {
+            }
             event.getEntity().setData(COINS_IN_BAG, clone);
         }
     }
 
     public static class CoinsInBag implements INBTSerializable<CompoundTag> {
         public int valueTotalInCoins = 0;
-        public double valueTotalInCurrency = 0.0;
+        public long valueTotalInCurrency = 0L;
         public boolean isCoinsLostOnDeath = true;
 
         @Override
         public CompoundTag serializeNBT(HolderLookup.Provider lookupProvider) {
             CompoundTag nbt = new CompoundTag();
             nbt.putInt("ValueTotalInCoins", valueTotalInCoins);
-            nbt.putDouble("ValueTotalInCurrency", valueTotalInCurrency);
+            nbt.putLong("ValueTotalInCurrency", valueTotalInCurrency);
             nbt.putBoolean("IsCoinsLostOnDeath", isCoinsLostOnDeath);
             return nbt;
         }
@@ -86,7 +90,16 @@ public class CoinsBagCapabilities {
         @Override
         public void deserializeNBT(HolderLookup.Provider lookupProvider, CompoundTag nbt) {
             valueTotalInCoins = nbt.getInt("ValueTotalInCoins");
-            valueTotalInCurrency = nbt.getDouble("ValueTotalInCurrency");
+
+            if (nbt.contains("ValueTotalInCurrency", CompoundTag.TAG_LONG)) {
+                valueTotalInCurrency = nbt.getLong("ValueTotalInCurrency");
+            } else if (nbt.contains("ValueTotalInCurrency", CompoundTag.TAG_DOUBLE)) {
+                double legacyDouble = nbt.getDouble("ValueTotalInCurrency");
+                valueTotalInCurrency = Math.round(legacyDouble * 100);
+            } else {
+                valueTotalInCurrency = 0L;
+            }
+
             isCoinsLostOnDeath = nbt.getBoolean("IsCoinsLostOnDeath");
         }
 
@@ -98,15 +111,16 @@ public class CoinsBagCapabilities {
     }
 
     public record CoinsInBagSyncPayload(CoinsInBag data) implements CustomPacketPayload {
-        public static final Type<CoinsInBagSyncPayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(SGEconomyMod.MG_COINS_ID, "coins_in_bag_sync"));
+        public static final Type<CoinsInBagSyncPayload> TYPE = new Type<>(
+                ResourceLocation.fromNamespaceAndPath(SGEconomyMod.MG_COINS_ID, "coins_in_bag_sync"));
         public static final StreamCodec<RegistryFriendlyByteBuf, CoinsInBagSyncPayload> STREAM_CODEC = StreamCodec.of(
-            (RegistryFriendlyByteBuf buffer, CoinsInBagSyncPayload message) -> buffer.writeNbt(message.data().serializeNBT(buffer.registryAccess())),
-            (RegistryFriendlyByteBuf buffer) -> {
-                CoinsInBagSyncPayload message = new CoinsInBagSyncPayload(new CoinsInBag());
-                message.data.deserializeNBT(buffer.registryAccess(), buffer.readNbt());
-                return message;
-            }
-        );
+                (RegistryFriendlyByteBuf buffer, CoinsInBagSyncPayload message) -> buffer
+                        .writeNbt(message.data().serializeNBT(buffer.registryAccess())),
+                (RegistryFriendlyByteBuf buffer) -> {
+                    CoinsInBagSyncPayload message = new CoinsInBagSyncPayload(new CoinsInBag());
+                    message.data.deserializeNBT(buffer.registryAccess(), buffer.readNbt());
+                    return message;
+                });
 
         @Override
         public Type<CoinsInBagSyncPayload> type() {
@@ -115,10 +129,13 @@ public class CoinsBagCapabilities {
 
         public static void handleData(final CoinsInBagSyncPayload message, final IPayloadContext context) {
             if (context.flow() == PacketFlow.CLIENTBOUND && message.data != null) {
-                context.enqueueWork(() -> context.player().getData(COINS_IN_BAG).deserializeNBT(context.player().registryAccess(), message.data.serializeNBT(context.player().registryAccess()))).exceptionally(e -> {
-                    context.connection().disconnect(Component.literal(e.getMessage()));
-                    return null;
-                });
+                context.enqueueWork(
+                        () -> context.player().getData(COINS_IN_BAG).deserializeNBT(context.player().registryAccess(),
+                                message.data.serializeNBT(context.player().registryAccess())))
+                        .exceptionally(e -> {
+                            context.connection().disconnect(Component.literal(e.getMessage()));
+                            return null;
+                        });
             }
         }
     }

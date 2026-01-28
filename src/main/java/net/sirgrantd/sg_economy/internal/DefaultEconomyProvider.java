@@ -22,8 +22,8 @@ public enum DefaultEconomyProvider implements EconomyProvider {
     @Override
     public double getCurrency(Entity entity) {
         if (isDecimalCurrency()) {
-            return entity.getData(CoinsBagCapabilities.COINS_IN_BAG).valueTotalInCurrency;
-        }       
+            return entity.getData(CoinsBagCapabilities.COINS_IN_BAG).valueTotalInCurrency / 100.0;
+        }
         return (double) entity.getData(CoinsBagCapabilities.COINS_IN_BAG).valueTotalInCoins;
     }
 
@@ -31,7 +31,7 @@ public enum DefaultEconomyProvider implements EconomyProvider {
     public void setCurrency(Entity entity, double amount) {
         CoinsInBag coinsInBag = entity.getData(CoinsBagCapabilities.COINS_IN_BAG);
         if (isDecimalCurrency()) {
-            coinsInBag.valueTotalInCurrency = Math.max(0.0, amount);
+            coinsInBag.valueTotalInCurrency = Math.max(0L, Math.round(amount * 100.0));
         } else {
             coinsInBag.valueTotalInCoins = (int) Math.max(0, Math.floor(amount));
         }
@@ -42,7 +42,8 @@ public enum DefaultEconomyProvider implements EconomyProvider {
     public void addCurrency(Entity entity, double amount) {
         CoinsInBag coinsInBag = entity.getData(CoinsBagCapabilities.COINS_IN_BAG);
         if (isDecimalCurrency()) {
-            coinsInBag.valueTotalInCurrency = Math.max(0.0, getCurrency(entity) + amount);
+            long addCentavos = Math.round(amount * 100.0);
+            coinsInBag.valueTotalInCurrency = Math.max(0L, coinsInBag.valueTotalInCurrency + addCentavos);
         } else {
             coinsInBag.valueTotalInCoins = Math.max(0, getCoins(entity) + (int) amount);
         }
@@ -53,7 +54,8 @@ public enum DefaultEconomyProvider implements EconomyProvider {
     public void removeCurrency(Entity entity, double amount) {
         CoinsInBag coinsInBag = entity.getData(CoinsBagCapabilities.COINS_IN_BAG);
         if (isDecimalCurrency()) {
-            coinsInBag.valueTotalInCurrency = Math.max(0.0, getCurrency(entity) - amount);
+            long removeCentavos = Math.round(amount * 100.0);
+            coinsInBag.valueTotalInCurrency = Math.max(0L, coinsInBag.valueTotalInCurrency - removeCentavos);
         } else {
             coinsInBag.valueTotalInCoins = Math.max(0, getCoins(entity) - (int) amount);
         }

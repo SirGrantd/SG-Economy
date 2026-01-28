@@ -334,7 +334,15 @@ public class EconomyCommand {
                         if (attachments.contains(key)) {
                             CompoundTag coinsNbt = attachments.getCompound(key);
                             if (useDecimal) {
-                                currency = coinsNbt.getDouble("ValueTotalInCurrency");
+
+                                if (coinsNbt.contains("ValueTotalInCurrency", CompoundTag.TAG_LONG)) {
+                                    currency = coinsNbt.getLong("ValueTotalInCurrency") / 100.0;
+                                } else if (coinsNbt.contains("ValueTotalInCurrency", CompoundTag.TAG_DOUBLE)) {
+                                    currency = coinsNbt.getDouble("ValueTotalInCurrency");
+                                } else {
+                                    currency = 0.0;
+                                }
+                                
                             } else {
                                 currency = coinsNbt.getInt("ValueTotalInCoins");
                             }

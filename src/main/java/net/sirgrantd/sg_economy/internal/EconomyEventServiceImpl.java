@@ -1,8 +1,11 @@
 package net.sirgrantd.sg_economy.internal;
 
 import net.minecraft.world.entity.Entity;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.fml.loading.FMLEnvironment;
 import net.sirgrantd.sg_economy.SGEconomyMod;
 import net.sirgrantd.sg_economy.api.EconomyEventProvider;
+import net.sirgrantd.sg_economy.client.ClientSyncedConfig;
 import net.sirgrantd.sg_economy.config.ServerConfig;
 import net.sirgrantd.sg_economy.repositories.CoinsBagRepository;
 
@@ -10,6 +13,9 @@ public class EconomyEventServiceImpl implements EconomyEventProvider {
 
     @Override
     public boolean isDecimalSystem() {
+        if (FMLEnvironment.dist == Dist.CLIENT) {
+            return ClientSyncedConfig.isDecimalCurrency();
+        }
         return ServerConfig.isDecimalCurrency;
     }
 

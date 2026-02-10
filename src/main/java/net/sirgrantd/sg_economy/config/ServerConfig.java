@@ -23,27 +23,28 @@ public class ServerConfig {
 
         static {
             CONFIG_BUILDER.push("ECONOMY SETTINGS");
-            
+
             DECIMAL_CURRENCY = CONFIG_BUILDER
-                .comment("If true, the economy will use decimal currency (e.g., 10.5 coins). If false, it will use whole numbers only.")
-                .comment("Note: Changing this setting affects players existing balances.")
-                .define("decimalCurrency", true);
-                
+                    .comment(
+                            "If true, the economy will use decimal currency (e.g., 10.5 coins). If false, it will use whole numbers only.")
+                    .comment("Note: Changing this setting affects players existing balances.")
+                    .define("decimalCurrency", true);
+
             CONFIG_BUILDER.pop();
-            
+
             CONFIG_BUILDER.push("DEATH SETTINGS");
 
             PERCENTAGE_COINS_SAVE_ON_DEATH = CONFIG_BUILDER
-                .comment("The percentage of coins save on death")
-                .defineInRange("percentageCoinsSaveOnDeath", 100, 0, 100);
-            
+                    .comment("The percentage of coins save on death")
+                    .defineInRange("percentageCoinsSaveOnDeath", 100, 0, 100);
+
             CONFIG_BUILDER.pop();
 
             CONFIG_BUILDER.push("PAY COMMAND");
 
             IS_ACTIVE_PAY_COMMAND = CONFIG_BUILDER
-                .comment("If true, the /coins pay command will be active.")
-                .define("isActivePayCommand", true);
+                    .comment("If true, the /coins pay command will be active.")
+                    .define("isActivePayCommand", true);
 
             CONFIG_BUILDER.pop();
 
@@ -57,7 +58,15 @@ public class ServerConfig {
         isDecimalCurrency = Config.DECIMAL_CURRENCY.get();
         percentageCoinsSaveOnDeath = Config.PERCENTAGE_COINS_SAVE_ON_DEATH.get();
         isActivePayCommand = Config.IS_ACTIVE_PAY_COMMAND.get();
-        SGEconomyMod.LOGGER.info("ServerConfig baked: isDecimalCurrency={}, percentageCoinsSaveOnDeath={}, isActivePayCommand={}",
+
+        net.neoforged.neoforge.network.PacketDistributor.sendToAllPlayers(
+                new net.sirgrantd.sg_economy.network.payload.SyncServerConfigS2C(
+                        isDecimalCurrency,
+                        percentageCoinsSaveOnDeath,
+                        isActivePayCommand));
+
+        SGEconomyMod.LOGGER.info(
+                "ServerConfig baked: isDecimalCurrency={}, percentageCoinsSaveOnDeath={}, isActivePayCommand={}",
                 isDecimalCurrency, percentageCoinsSaveOnDeath, isActivePayCommand);
     }
 

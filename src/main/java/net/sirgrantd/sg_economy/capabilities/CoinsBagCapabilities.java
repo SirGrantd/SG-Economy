@@ -23,6 +23,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import net.sirgrantd.sg_economy.SGEconomyMod;
+import net.sirgrantd.sg_economy.network.SGNetwork;
 
 @EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
 public class CoinsBagCapabilities {
@@ -33,7 +34,7 @@ public class CoinsBagCapabilities {
 
     @SubscribeEvent
     public static void init(FMLCommonSetupEvent event) {
-        SGEconomyMod.addNetworkMessage(CoinsInBagSyncPayload.TYPE, CoinsInBagSyncPayload.STREAM_CODEC,
+        SGNetwork.addNetworkMessage(CoinsInBagSyncPayload.TYPE, CoinsInBagSyncPayload.STREAM_CODEC,
                 CoinsInBagSyncPayload::handleData);
     }
 

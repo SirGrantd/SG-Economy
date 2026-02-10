@@ -1,39 +1,48 @@
 package examples;
 
-import net.sirgrantd.sg_economy.api.SGEconomyApi;
-import net.sirgrantd.sg_economy.api.economy.EconomyProvider;
-import net.sirgrantd.sg_economy.api.event.EconomyEventProvider;
-import net.sirgrantd.sg_economy.api.util.CurrencyUtils;
 import net.minecraft.world.entity.Entity;
+import net.sirgrantd.sg_economy.api.EconomyEventProvider;
+import net.sirgrantd.sg_economy.api.SGEconomyApi;
 
 public class SgEconomyApiExamples {
 
-    public void examples(Entity player) {
-        EconomyProvider economy = SGEconomyApi.getSGEconomy();
-        EconomyEventProvider events = SGEconomyApi.getSGEconomyEvents();
+    public void examples(Entity player, Entity target) {
 
-        // METHODS OF EconomyProvider
+        EconomyEventProvider economy = SGEconomyApi.get();
 
-        boolean decimals = economy.isDecimalCurrency();
-        boolean hasCapability = economy.hasCapability(player);
-        double balance = economy.getCurrency(player);
-        economy.addCurrency(player, 30.5);
-        economy.removeCurrency(player, 5.7);
-        economy.setCurrency(player, 100.0);
+        // SYSTEM CONFIGURATION
 
-        int coins = economy.getCoins(player);
-        economy.addCoins(player, 15);
-        economy.removeCoins(player, 8);
-        economy.setCoins(player, 55);
+        boolean isDecimal = economy.isDecimalSystem();
+        boolean hasWallet = economy.hasCoinsBag(player);
 
-        // METHODS OF EconomyEventProvider
+        // BALANCE QUERIES
 
-        boolean losesCoins = events.isCoinsLostOnDeath(player);
-        events.setCoinsLostOnDeath(player, true);
-        int percentageSaved = events.getPercentageCoinsSaveOnDeath();
+        double balance = economy.getBalance(player);
+        boolean hasEnough = economy.hasBalance(player, 20.0);
 
-        // USAGE OF UTILITY
+        // OPERATIONS WITH DOUBLE
 
-        boolean hasMoney = CurrencyUtils.hasBalance(player, 20.0);
+        economy.depositBalance(player, 30.5);
+        economy.withdrawBalance(player, 5.7);
+        economy.setBalance(player, 100.0);
+
+        // OPERATIONS WITH INT (when not a decimal system)
+
+        int coins = economy.getBalanceAsInt(player);
+        economy.depositBalanceAsInt(player, 15);
+        economy.withdrawBalanceAsInt(player, 8);
+        economy.setBalanceAsInt(player, 55);
+
+        // BALANCE TRANSFER BETWEEN ENTITIES
+
+        economy.transferBalance(player, target, 10.0);
+        economy.transferBalanceAsInt(player, target, 5);
+
+        // BEHAVIOR ON DEATH
+
+        boolean losesBalance = economy.balanceLostOnDeath(player);
+        economy.setBalanceLostOnDeath(player, true);
+
+        int percentageSaved = economy.getPercentageBalanceSaveOnDeath();
     }
 }

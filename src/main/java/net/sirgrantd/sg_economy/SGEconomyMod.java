@@ -53,7 +53,6 @@ public class SGEconomyMod {
 		
 		@SubscribeEvent
 		public static void setupClient(FMLClientSetupEvent event) {
-			// NeoForge.EVENT_BUS.register(new MagicCoinsButtonInventory());
 		}
 	}
 

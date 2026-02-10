@@ -57,6 +57,8 @@ public class ServerConfig {
         isDecimalCurrency = Config.DECIMAL_CURRENCY.get();
         percentageCoinsSaveOnDeath = Config.PERCENTAGE_COINS_SAVE_ON_DEATH.get();
         isActivePayCommand = Config.IS_ACTIVE_PAY_COMMAND.get();
+        SGEconomyMod.LOGGER.info("ServerConfig baked: isDecimalCurrency={}, percentageCoinsSaveOnDeath={}, isActivePayCommand={}",
+                isDecimalCurrency, percentageCoinsSaveOnDeath, isActivePayCommand);
     }
 
     private static void onConfigUnload() {
@@ -72,6 +74,7 @@ public class ServerConfig {
                 bakeConfig();
             }
         } catch (Exception e) {
+            SGEconomyMod.LOGGER.error("Error loading server config", e);
             onConfigUnload();
         }
     }

@@ -14,11 +14,11 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ScreenEvent;
-
+import net.sirgrantd.sg_economy.api.EconomyEventProvider;
 import net.sirgrantd.sg_economy.config.ClientConfig;
 import net.sirgrantd.sg_economy.gui.components.ImageDisplayRender;
 import net.sirgrantd.sg_economy.gui.components.TextDisplayRender;
-import net.sirgrantd.sg_economy.internal.DefaultEconomyProvider;
+import net.sirgrantd.sg_economy.internal.EconomyServices;
 
 @EventBusSubscriber({ Dist.CLIENT })
 public class CurrencyInventoryDisplay {
@@ -50,11 +50,12 @@ public class CurrencyInventoryDisplay {
             Player player = Minecraft.getInstance().player;
 
             String amoutCurrency = "";
-            if (DefaultEconomyProvider.INSTANCE.isDecimalCurrency()) {
-                double balance = DefaultEconomyProvider.INSTANCE.getCurrency(player);
+            EconomyEventProvider economy = EconomyServices.get();
+            if (economy.isDecimalSystem()) {
+                double balance = economy.getBalance(player);
                 amoutCurrency = String.format("%.2f", balance);
             } else {
-                int balance = DefaultEconomyProvider.INSTANCE.getCoins(player);
+                int balance = economy.getBalanceAsInt(player);
                 amoutCurrency = Integer.toString(balance);
             }
 

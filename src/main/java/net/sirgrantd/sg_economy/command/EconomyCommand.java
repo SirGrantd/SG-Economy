@@ -31,9 +31,9 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.sirgrantd.sg_economy.SGEconomyMod;
-import net.sirgrantd.sg_economy.api.util.CurrencyUtils;
+import net.sirgrantd.sg_economy.api.EconomyEventProvider;
 import net.sirgrantd.sg_economy.config.ServerConfig;
-import net.sirgrantd.sg_economy.internal.DefaultEconomyProvider;
+import net.sirgrantd.sg_economy.internal.EconomyServices;
 
 @EventBusSubscriber
 public class EconomyCommand {
@@ -73,10 +73,11 @@ public class EconomyCommand {
             return 0;
         }
 
-        if (DefaultEconomyProvider.INSTANCE.isDecimalCurrency()) {
-            DefaultEconomyProvider.INSTANCE.addCurrency(player, amount);
+        EconomyEventProvider economy = EconomyServices.get();
+        if (economy.isDecimalSystem()) {
+            economy.depositBalance(player, amount);
         } else {
-            DefaultEconomyProvider.INSTANCE.addCoins(player, (int) Math.round(amount));
+            economy.depositBalance(player, amount);
         }
 
         String coinText = Component.translatable(
@@ -119,10 +120,11 @@ public class EconomyCommand {
             return 0;
         }
 
-        if (DefaultEconomyProvider.INSTANCE.isDecimalCurrency()) {
-            DefaultEconomyProvider.INSTANCE.setCurrency(player, amount);
+        EconomyEventProvider economy = EconomyServices.get();
+        if (economy.isDecimalSystem()) {
+            economy.setBalance(player, amount);
         } else {
-            DefaultEconomyProvider.INSTANCE.setCoins(player, (int) Math.round(amount));
+            economy.setBalance(player, amount);
         }
 
         String coinText = Component.translatable(
@@ -163,17 +165,18 @@ public class EconomyCommand {
             arguments.getSource().sendSystemMessage(Component.translatable("command.coins.exception.player_not_found"));
             return 0;
         }
-
-        if (!CurrencyUtils.hasBalance(player, amount)) {
+        
+        EconomyEventProvider economy = EconomyServices.get();
+        if (!economy.hasBalance(player, amount)) {
             arguments.getSource()
                     .sendSystemMessage(Component.translatable("command.coins.exception.insufficient_funds"));
             return 0;
         }
 
-        if (DefaultEconomyProvider.INSTANCE.isDecimalCurrency()) {
-            DefaultEconomyProvider.INSTANCE.removeCurrency(player, amount);
+        if (economy.isDecimalSystem()) {
+            economy.withdrawBalance(player, amount);
         } else {
-            DefaultEconomyProvider.INSTANCE.removeCoins(player, (int) Math.round(amount));
+            economy.withdrawBalance(player, amount);
         }
 
         String coinText = Component.translatable(
@@ -213,14 +216,15 @@ public class EconomyCommand {
             return 0;
         }
 
-        if (DefaultEconomyProvider.INSTANCE.isDecimalCurrency()) {
-            double balance = DefaultEconomyProvider.INSTANCE.getCurrency(player);
+        EconomyEventProvider economy = EconomyServices.get();
+        if (economy.isDecimalSystem()) {
+            double balance = economy.getBalance(player);
             String balanceString = String.format("%.2f", balance);
 
             arguments.getSource().sendSystemMessage(Component.literal(
                     String.format("%s: §a$%s", player.getName().getString(), balanceString)));
         } else {
-            int balance = DefaultEconomyProvider.INSTANCE.getCoins(player);
+            int balance = (int) economy.getBalance(player);
 
             arguments.getSource().sendSystemMessage(Component.literal(
                     String.format("%s: §a$%d", player.getName().getString(), balance)));
@@ -259,11 +263,11 @@ public class EconomyCommand {
 
         double amount = DoubleArgumentType.getDouble(arguments, "amount");
 
-        boolean isDecimal = DefaultEconomyProvider.INSTANCE.isDecimalCurrency();
+        EconomyEventProvider economy = EconomyServices.get();
 
-        double senderBalance = isDecimal
-                ? DefaultEconomyProvider.INSTANCE.getCurrency(sender)
-                : DefaultEconomyProvider.INSTANCE.getCoins(sender);
+        double senderBalance = economy.isDecimalSystem()
+                ? economy.getBalance(sender)
+                : (int) economy.getBalance(sender);
 
         if (senderBalance < amount) {
             arguments.getSource()
@@ -271,23 +275,21 @@ public class EconomyCommand {
             return 0;
         }
 
-        if (isDecimal) {
-            DefaultEconomyProvider.INSTANCE.removeCurrency(sender, amount);
-            DefaultEconomyProvider.INSTANCE.addCurrency(target, amount);
+        if (economy.isDecimalSystem()) {
+            economy.transferBalance(senderEntity, targetEntity, amount);
         } else {
             int intAmount = (int) Math.round(amount);
-            DefaultEconomyProvider.INSTANCE.removeCoins(sender, intAmount);
-            DefaultEconomyProvider.INSTANCE.addCoins(target, intAmount);
+            economy.transferBalance(senderEntity, targetEntity, intAmount);
         }
 
         String coinText = Component.translatable(
                 amount == 1 ? "text.coin" : "text.coins").getString();
 
         String sentMsg = String.format("§aYou sent %s %s to %s.",
-                isDecimal ? String.format("%.2f", amount) : String.format("%d", Math.round(amount)), coinText,
+                economy.isDecimalSystem() ? String.format("%.2f", amount) : String.format("%d", Math.round(amount)), coinText,
                 target.getName().getString());
         String receivedMsg = String.format("§aYou received %s %s from %s.",
-                isDecimal ? String.format("%.2f", amount) : String.format("%d", Math.round(amount)), coinText,
+                economy.isDecimalSystem() ? String.format("%.2f", amount) : String.format("%d", Math.round(amount)), coinText,
                 sender.getName().getString());
 
         arguments.getSource().sendSystemMessage(Component.literal(sentMsg));
@@ -305,11 +307,12 @@ public class EconomyCommand {
         File playerDataFolder = server.getWorldPath(LevelResource.PLAYER_DATA_DIR).toFile();
         List<PlayerCoinsInfo> ranking = new ArrayList<>();
 
-        boolean useDecimal = DefaultEconomyProvider.INSTANCE.isDecimalCurrency();
+        EconomyEventProvider economy = EconomyServices.get();
+        boolean isDecimalSystem = economy.isDecimalSystem();
 
         for (PlayerOnlineInfo onlineInfo : playersOnlineMap.values()) {
             Entity playerEntity = onlineInfo.player();
-            double currency = DefaultEconomyProvider.INSTANCE.getCurrency(playerEntity);
+            double currency = economy.getBalance(playerEntity);
             String name = playerEntity.getName().getString();
             ranking.add(new PlayerCoinsInfo(name, currency));
         }
@@ -333,7 +336,7 @@ public class EconomyCommand {
                         String key = SGEconomyMod.MG_COINS_ID + ":coins_in_bag";
                         if (attachments.contains(key)) {
                             CompoundTag coinsNbt = attachments.getCompound(key);
-                            if (useDecimal) {
+                            if (isDecimalSystem) {
 
                                 if (coinsNbt.contains("ValueTotalInCurrency", CompoundTag.TAG_LONG)) {
                                     currency = coinsNbt.getLong("ValueTotalInCurrency") / 100.0;
@@ -376,7 +379,7 @@ public class EconomyCommand {
 
         for (int i = start; i < end; i++) {
             PlayerCoinsInfo info = ranking.get(i);
-            String valueStr = useDecimal
+            String valueStr = isDecimalSystem
                     ? String.format("$%.2f", info.currency())
                     : String.format("$%d", (int) info.currency());
             arguments.getSource().sendSystemMessage(Component.literal(

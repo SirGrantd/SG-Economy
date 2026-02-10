@@ -4,8 +4,9 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
-import net.sirgrantd.sg_economy.internal.DefaultEconomyProvider;
-import net.sirgrantd.sg_economy.internal.DeathEventEconomyProvider;
+import net.sirgrantd.sg_economy.SGEconomyMod;
+import net.sirgrantd.sg_economy.api.EconomyEventProvider;
+import net.sirgrantd.sg_economy.internal.EconomyServices;
 import net.neoforged.fml.common.EventBusSubscriber;
 
 @EventBusSubscriber
@@ -21,21 +22,20 @@ public class DeathEvent {
     }
 
     private static void handlePlayerDeath(Player player) {
-        boolean isCoinsLostOnDeath = DeathEventEconomyProvider.INSTANCE.isCoinsLostOnDeath(player);
-        double percentageCoinsSaveOnDeath = DeathEventEconomyProvider.INSTANCE.getPercentageCoinsSaveOnDeath() / 100.0;
-        System.out.println("Is coins lost on death: " + isCoinsLostOnDeath);
-        System.out.println("Percentage coins saved on death: " + percentageCoinsSaveOnDeath);
+        EconomyEventProvider economy = EconomyServices.get();
+        boolean balanceLostOnDeath = economy.balanceLostOnDeath(player);
+        double percentageBalanceSaveOnDeath = economy.getPercentageBalanceSaveOnDeath() / 100.0;
 
-        if (DefaultEconomyProvider.INSTANCE.isDecimalCurrency()) {
-            double balance = DefaultEconomyProvider.INSTANCE.getCurrency(player);
-            double coinsToSave = isCoinsLostOnDeath ? balance * percentageCoinsSaveOnDeath : balance;
-            System.out.println("Setting currency to: " + coinsToSave);
-            DefaultEconomyProvider.INSTANCE.setCurrency(player, coinsToSave);
+        if (economy.isDecimalSystem()) {
+            double balance = economy.getBalance(player);
+            double balanceToSave = balanceLostOnDeath ? balance * percentageBalanceSaveOnDeath : balance;
+            economy.setBalance(player, balanceToSave);
+            SGEconomyMod.LOGGER.debug("Player {} died. Original balance: {}, Balance to save: {}", player.getName().getString(), balance, balanceToSave);
         } else {
-            int balance = DefaultEconomyProvider.INSTANCE.getCoins(player);
-            int coinsToSave = isCoinsLostOnDeath ? (int) Math.round(balance * percentageCoinsSaveOnDeath) : balance;
-            System.out.println("Setting coins to: " + coinsToSave);
-            DefaultEconomyProvider.INSTANCE.setCoins(player, coinsToSave);
+            int balance = economy.getBalanceAsInt(player);
+            int balanceToSave = balanceLostOnDeath ? (int) Math.round(balance * percentageBalanceSaveOnDeath) : balance;
+            economy.setBalanceAsInt(player, balanceToSave);
+            SGEconomyMod.LOGGER.debug("Player {} died. Original balance: {}, Balance to save: {}", player.getName().getString(), balance, balanceToSave);
         }
     }
 }

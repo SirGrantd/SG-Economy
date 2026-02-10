@@ -16,25 +16,21 @@ import net.sirgrantd.sg_economy.client.ClientSyncedConfig;
 public record SyncServerConfigS2C(
         boolean decimalCurrency,
         int percentageCoinsSaveOnDeath,
-        boolean isActivePayCommand
-) implements CustomPacketPayload {
+        boolean isActivePayCommand) implements CustomPacketPayload {
 
-    public static final Type<SyncServerConfigS2C> TYPE =
-            new Type<>(ResourceLocation.fromNamespaceAndPath(SGEconomyMod.MOD_ID, "sync_server_config"));
+    public static final Type<SyncServerConfigS2C> TYPE = new Type<>(
+            ResourceLocation.fromNamespaceAndPath(SGEconomyMod.MOD_ID, "sync_server_config"));
 
-    public static final StreamCodec<RegistryFriendlyByteBuf, SyncServerConfigS2C> STREAM_CODEC =
-            StreamCodec.of(
-                    (buf, msg) -> {
-                        buf.writeBoolean(msg.decimalCurrency);
-                        buf.writeInt(msg.percentageCoinsSaveOnDeath);
-                        buf.writeBoolean(msg.isActivePayCommand);
-                    },
-                    (buf) -> new SyncServerConfigS2C(
-                            buf.readBoolean(),
-                            buf.readInt(),
-                            buf.readBoolean()
-                    )
-            );
+    public static final StreamCodec<RegistryFriendlyByteBuf, SyncServerConfigS2C> STREAM_CODEC = StreamCodec.of(
+            (buf, msg) -> {
+                buf.writeBoolean(msg.decimalCurrency);
+                buf.writeInt(msg.percentageCoinsSaveOnDeath);
+                buf.writeBoolean(msg.isActivePayCommand);
+            },
+            (buf) -> new SyncServerConfigS2C(
+                    buf.readBoolean(),
+                    buf.readInt(),
+                    buf.readBoolean()));
 
     @Override
     public Type<SyncServerConfigS2C> type() {
@@ -54,7 +50,6 @@ public record SyncServerConfigS2C(
         ClientSyncedConfig.apply(
                 msg.decimalCurrency(),
                 msg.percentageCoinsSaveOnDeath(),
-                msg.isActivePayCommand()
-        );
+                msg.isActivePayCommand());
     }
 }

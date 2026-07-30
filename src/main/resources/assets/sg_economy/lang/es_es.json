@@ -1,0 +1,18 @@
+{
+    "command.coins.add.success": "%2$s recibió %1$d %3$s",
+    "command.coins.remove.success": "%2$s eliminó %1$d %3$s",
+    "command.coins.set.success": "%2$s se estableció en %1$d %3$s",
+    "command.coins.rank.title": "Clasificación de Magnates",
+    "command.coins.pay.sent": "Has enviado %1$s %2$s a %3$s.",
+    "command.coins.pay.received": "Has recibido %1$s %2$s de %3$s.",
+
+    "command.coins.exception.player_not_found": "§cel jugador no pudo ser encontrado",
+    "command.coins.exception.insufficient_funds": "el jugador no tiene fondos suficientes",
+    "command.coins.exception.disabled": "§ceste comando está deshabilitado",
+    "command.coins.exception.only_players": "§ceste comando solo puede ser ejecutado por jugadores",
+    "command.coins.exception.target_not_online": "§cel objetivo debe ser un jugador en línea",
+
+    "text.coin": "moneda",
+    "text.coins": "monedas",
+    "text.page": "página"
+}

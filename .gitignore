@@ -1,0 +1,48 @@
+# Diretórios de build e binários
+/build/
+/bin/
+
+# Pastas de configurações locais do Eclipse, VSCode e Gradle
+/.eclipse/
+/.gradle/
+/.vscode/
+
+# Logs e relatórios
+*.log
+*.out
+*.tmp
+*.pid
+/run/logs/
+run/crash-reports/
+
+# Arquivos temporários do Gradle
+/build/
+.gradle/
+**/.gradle/
+!gradle/wrapper/gradle-wrapper.properties # Exceção para o wrapper do Gradle
+
+# Configurações temporárias do Gradle e IDE
+.gradle/
+/buildOutputCleanup/
+/tmp/
+/neoformruntime/
+
+# Arquivos do jogo gerados durante a execução
+run/
+
+# Arquivos específicos do sistema operacional
+.DS_Store
+Thumbs.db
+
+# Arquivos de backup ou temporários
+*.bak
+*.swp
+*.swo
+*.tmp
+*.old
+
+# Arquivos Java gerados
+/build/classes/
+/build/generated/
+
+.idea

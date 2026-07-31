@@ -4,7 +4,6 @@ import java.util.function.Supplier;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
@@ -33,14 +32,15 @@ public class SGEconomyMod {
         public SGEconomyMod(IEventBus eventBus, ModContainer modContainer) {
                 ATTACHMENT_TYPES.register(eventBus);
 
+                eventBus.addListener(SGEconomyMod::onCommonSetupEvent);
+
                 modContainer.registerConfig(ModConfig.Type.SERVER, ServerConfig.Config.SPEC,
                                 String.format("%s-server.toml", MOD_ID));
                 modContainer.registerConfig(ModConfig.Type.CLIENT, ClientConfig.Config.SPEC,
                                 String.format("%s-client.toml", MOD_ID));
         }
 
-        @SubscribeEvent
-        public static void onCommonSetupEvent(FMLCommonSetupEvent event) {
+        private static void onCommonSetupEvent(FMLCommonSetupEvent event) {
                 event.enqueueWork(() -> {
                         CelesthydApi.registerConfigSync(() -> new SyncServerConfigS2C(
                                         ServerConfig.isDecimalCurrency,

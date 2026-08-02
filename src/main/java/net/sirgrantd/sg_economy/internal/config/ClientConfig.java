@@ -15,11 +15,15 @@ public class ClientConfig {
 
     public static int xDisplayCurrency;
     public static int yDisplayCurrency;
+    public static int xDisplayCurrencyCreative;
+    public static int yDisplayCurrencyCreative;
     public static boolean activeDisplayCurrency = true;
 
     public static class Config {
         public static final Supplier<Integer> X_DISPLAY_CURRENCY;
         public static final Supplier<Integer> Y_DISPLAY_CURRENCY;
+        public static final Supplier<Integer> X_DISPLAY_CURRENCY_CREATIVE;
+        public static final Supplier<Integer> Y_DISPLAY_CURRENCY_CREATIVE;
         public static final Supplier<Boolean> ACTIVE_DISPLAY_CURRENCY;
 
         public static final ModConfigSpec SPEC;
@@ -38,6 +42,14 @@ public class ClientConfig {
                     .comment("The y position of the display for coins")
                     .defineInRange("yDisplayCurrency", 0, Integer.MIN_VALUE, Integer.MAX_VALUE);
 
+            X_DISPLAY_CURRENCY_CREATIVE = CONFIG_BUILDER
+                    .comment("The x position of the display for coins in creative mode")
+                    .defineInRange("xDisplayCurrencyCreative", 0, Integer.MIN_VALUE, Integer.MAX_VALUE);
+
+            Y_DISPLAY_CURRENCY_CREATIVE = CONFIG_BUILDER
+                    .comment("The y position of the display for coins in creative mode")
+                    .defineInRange("yDisplayCurrencyCreative", 0, Integer.MIN_VALUE, Integer.MAX_VALUE);
+
             ACTIVE_DISPLAY_CURRENCY = CONFIG_BUILDER
                     .comment("Whether to display the coin amount in the inventory screen")
                     .define("activeDisplayCurrency", true);
@@ -51,6 +63,8 @@ public class ClientConfig {
     private static void bakeConfig() {
         xDisplayCurrency = Config.X_DISPLAY_CURRENCY.get();
         yDisplayCurrency = Config.Y_DISPLAY_CURRENCY.get();
+        xDisplayCurrencyCreative = Config.X_DISPLAY_CURRENCY_CREATIVE.get();
+        yDisplayCurrencyCreative = Config.Y_DISPLAY_CURRENCY_CREATIVE.get();
         activeDisplayCurrency = Config.ACTIVE_DISPLAY_CURRENCY.get();
     }
 

@@ -12,7 +12,7 @@ import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.ScreenEvent;
+import net.neoforged.neoforge.client.event.ContainerScreenEvent;
 import net.sirgrantd.celesthyd.api.gui.CelesthydImage;
 import net.sirgrantd.celesthyd.api.gui.CelesthydText;
 import net.sirgrantd.sg_economy.SGEconomyMod;
@@ -27,9 +27,15 @@ public class CurrencyDisplay {
     private static final Identifier DISPLAY_VIEW_MAGIC_COINS = Identifier.fromNamespaceAndPath(SGEconomyMod.MOD_ID,
             "textures/gui/sprites/display_view_magic_coins.png");
 
+    private static double lastBalanceValue = -1.0;
+    private static AbstractContainerScreen<?> lastGui = null;
+    private static String cachedBalance = "";
+    private static CelesthydImage cachedDisplayImage = null;
+    private static CelesthydText cachedDisplayText = null;
+
     @SubscribeEvent(priority = EventPriority.NORMAL)
-    public static void eventHandler(ScreenEvent.Render.Post event) {
-        Screen screen = event.getScreen();
+    public static void eventHandler(ContainerScreenEvent.Render.Foreground event) {
+        Screen screen = event.getContainerScreen();
 
         boolean isInventory = screen instanceof InventoryScreen;
         boolean isCreative = screen instanceof CreativeModeInventoryScreen;
@@ -55,34 +61,48 @@ public class CurrencyDisplay {
 
         if (isInventory || isCreative || isCurios) {
 
-            AbstractContainerScreen<?> gui = (AbstractContainerScreen<?>) screen;
+            AbstractContainerScreen<?> gui = event.getContainerScreen();
             isCreative = screen instanceof CreativeModeInventoryScreen;
 
             Player player = Minecraft.getInstance().player;
             double balanceValue = SGEconomyApi.getBalance(player);
 
-            String balance = SGEconomyApi.isDecimalSystem() ? String.format("%.2f", balanceValue)
-                    : String.format("%d", (long) balanceValue);
+            if (balanceValue != lastBalanceValue || gui != lastGui) {
+                lastBalanceValue = balanceValue;
+                lastGui = gui;
 
-            int xOffsetImage = isCreative ? 0 + ClientConfig.xDisplayCurrency : 0 + ClientConfig.xDisplayCurrency;
-            int yOffsetImage = isCreative ? -56 + ClientConfig.yDisplayCurrency : -26 + ClientConfig.yDisplayCurrency;
+                cachedBalance = SGEconomyApi.isDecimalSystem() ? String.format("%.2f", balanceValue)
+                        : String.format("%d", (long) balanceValue);
 
-            int displayWidth = 96;
-            int displayHeight = 24;
+                int cachedFontWidth = Minecraft.getInstance().font.width(cachedBalance);
 
-            int fontWidth = Minecraft.getInstance().font.width(balance);
+                int xOffsetImage = isCreative ? 0 + ClientConfig.xDisplayCurrencyCreative
+                        : 0 + ClientConfig.xDisplayCurrency;
+                int yOffsetImage = isCreative ? 165 + ClientConfig.yDisplayCurrencyCreative
+                        : -26 + ClientConfig.yDisplayCurrency;
 
-            int xOffsetText = xOffsetImage + displayWidth - fontWidth - 5;
-            int yOffsetText = yOffsetImage + (displayHeight / 2) - 3;
+                int displayWidth = 96;
+                int displayHeight = 24;
 
-            Identifier DisplayImage = isMagicCoins ? DISPLAY_VIEW_MAGIC_COINS
-                    : DISPLAY_VIEW_DEFAULT;
+                int xOffsetText = xOffsetImage + displayWidth - cachedFontWidth - 5;
+                int yOffsetText = yOffsetImage + (displayHeight / 2) - 3;
 
-            CelesthydImage displayImage = new CelesthydImage(gui, xOffsetImage, yOffsetImage, DisplayImage);
-            displayImage.extractContents(event.getGuiGraphics(), displayWidth, displayHeight);
+                Identifier DisplayImage = isMagicCoins ? DISPLAY_VIEW_MAGIC_COINS
+                        : DISPLAY_VIEW_DEFAULT;
 
-            CelesthydText displayText = new CelesthydText(gui, xOffsetText, yOffsetText, balance);
-            displayText.extractContents(event.getGuiGraphics());
+                cachedDisplayImage = new CelesthydImage(gui, xOffsetImage, yOffsetImage, DisplayImage);
+                cachedDisplayText = new CelesthydText(gui, xOffsetText, yOffsetText, cachedBalance);
+            }
+
+            event.getGuiGraphics().pose().pushMatrix();
+            event.getGuiGraphics().pose().translate(-gui.getLeftPos(), -gui.getTopPos());
+
+            if (cachedDisplayImage != null && cachedDisplayText != null) {
+                cachedDisplayImage.extractContents(event.getGuiGraphics(), 96, 24);
+                cachedDisplayText.extractContents(event.getGuiGraphics());
+            }
+
+            event.getGuiGraphics().pose().popMatrix();
         }
     }
 }

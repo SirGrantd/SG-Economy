@@ -15,7 +15,7 @@ public final class SGEconomyApi {
     }
 
     public static boolean isDecimalSystem() {
-        if (FMLEnvironment.getDist() == Dist.CLIENT) {
+        if (FMLEnvironment.dist == Dist.CLIENT) {
             return SyncClientConfig.isDecimalCurrency();
         }
         return ServerConfig.isDecimalCurrency;

@@ -5,7 +5,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.EventPriority;
@@ -22,9 +22,9 @@ import net.sirgrantd.sg_economy.internal.config.ClientConfig;
 @EventBusSubscriber({ Dist.CLIENT })
 public class CurrencyDisplay {
 
-    private static final Identifier DISPLAY_VIEW_DEFAULT = Identifier.fromNamespaceAndPath(SGEconomyMod.MOD_ID,
+    private static final ResourceLocation DISPLAY_VIEW_DEFAULT = ResourceLocation.fromNamespaceAndPath(SGEconomyMod.MOD_ID,
             "textures/gui/sprites/display_view_default.png");
-    private static final Identifier DISPLAY_VIEW_MAGIC_COINS = Identifier.fromNamespaceAndPath(SGEconomyMod.MOD_ID,
+    private static final ResourceLocation DISPLAY_VIEW_MAGIC_COINS = ResourceLocation.fromNamespaceAndPath(SGEconomyMod.MOD_ID,
             "textures/gui/sprites/display_view_magic_coins.png");
 
     private static double lastBalanceValue = -1.0;
@@ -87,22 +87,22 @@ public class CurrencyDisplay {
                 int xOffsetText = xOffsetImage + displayWidth - cachedFontWidth - 5;
                 int yOffsetText = yOffsetImage + (displayHeight / 2) - 3;
 
-                Identifier DisplayImage = isMagicCoins ? DISPLAY_VIEW_MAGIC_COINS
+                ResourceLocation DisplayImage = isMagicCoins ? DISPLAY_VIEW_MAGIC_COINS
                         : DISPLAY_VIEW_DEFAULT;
 
                 cachedDisplayImage = new CelesthydImage(gui, xOffsetImage, yOffsetImage, DisplayImage);
                 cachedDisplayText = new CelesthydText(gui, xOffsetText, yOffsetText, cachedBalance);
             }
 
-            event.getGuiGraphics().pose().pushMatrix();
-            event.getGuiGraphics().pose().translate(-gui.getLeftPos(), -gui.getTopPos());
+            event.getGuiGraphics().pose().pushPose();
+            event.getGuiGraphics().pose().translate(-gui.getGuiLeft(), -gui.getGuiTop(), 0);
 
             if (cachedDisplayImage != null && cachedDisplayText != null) {
-                cachedDisplayImage.extractContents(event.getGuiGraphics(), 96, 24);
-                cachedDisplayText.extractContents(event.getGuiGraphics());
+                cachedDisplayImage.render(event.getGuiGraphics(), 96, 24);
+                cachedDisplayText.render(event.getGuiGraphics());
             }
 
-            event.getGuiGraphics().pose().popMatrix();
+            event.getGuiGraphics().pose().popPose();
         }
     }
 }

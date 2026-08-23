@@ -1,11 +1,12 @@
 package net.sirgrantd.sg_economy.internal.attachments;
 
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.sirgrantd.celesthyd.api.network.ISyncableAttachment;
 import net.sirgrantd.sg_economy.internal.network.payloads.SyncCurrencyPlayerPayload;
+import net.sirgrantd.sg_economy.internal.validation.CurrencyDataValidator;
 
 public class CurrencyPlayerAttachment implements ISyncableAttachment {
 
@@ -16,7 +17,7 @@ public class CurrencyPlayerAttachment implements ISyncableAttachment {
     }
 
     public CurrencyPlayerAttachment(long balance) {
-        this.balance = balance;
+        this.balance = CurrencyDataValidator.getInstance().sanitize(balance);
     }
 
     public long getCount() {
@@ -24,15 +25,15 @@ public class CurrencyPlayerAttachment implements ISyncableAttachment {
     }
 
     public void setBalance(long balance) {
-        this.balance = balance;
+        this.balance = CurrencyDataValidator.getInstance().sanitize(balance);
     }
 
     public void addBalance(long amount) {
-        this.balance += amount;
+        this.balance = CurrencyDataValidator.getInstance().sanitize(this.balance + amount);
     }
 
     public void removeBalance(long amount) {
-        this.balance -= amount;
+        this.balance = CurrencyDataValidator.getInstance().sanitize(this.balance - amount);
     }
 
     @Override
@@ -41,13 +42,15 @@ public class CurrencyPlayerAttachment implements ISyncableAttachment {
     }
 
     @Override
-    public void serialize(ValueOutput output) {
-        output.putLong("balance", this.balance);
+    public CompoundTag serializeNBT(HolderLookup.Provider provider) {
+        CompoundTag tag = new CompoundTag();
+        tag.putLong("balance", this.balance);
+        return tag;
     }
 
     @Override
-    public void deserialize(ValueInput input) {
-        this.balance = input.getLongOr("balance", 0);
+    public void deserializeNBT(HolderLookup.Provider provider, CompoundTag nbt) {
+        this.balance = CurrencyDataValidator.getInstance().parseAndMigrateNbt(nbt);
     }
 
 }

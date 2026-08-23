@@ -233,24 +233,24 @@ public class SGEconomyCommand {
                     }
 
                     CompoundTag nbt = NbtIo.readCompressed(file.toPath(), NbtAccounter.unlimitedHeap());
+                    long internalBalance = 0L;
 
-                    var attachmentsOpt = nbt.getCompound("neoforge:attachments");
-                    if (attachmentsOpt.isPresent()) {
-                        var coinsNbtOpt = attachmentsOpt.get().getCompound(SGEconomyMod.MOD_ID + ":currency_player");
-
-                        if (coinsNbtOpt.isPresent()) {
-                            var balanceOpt = coinsNbtOpt.get().getLong("balance");
-
-                            if (balanceOpt.isPresent()) {
-                                long internalBalance = balanceOpt.get();
-
-                                if (isDecimalSystem) {
-                                    currency = internalBalance / 100.0;
-                                } else {
-                                    currency = internalBalance;
-                                }
-                            }
+                    if (nbt.contains("neoforge:attachments", 10)) { // 10 = TAG_COMPOUND
+                        CompoundTag attachments = nbt.getCompound("neoforge:attachments");
+                        if (attachments.contains(SGEconomyMod.MOD_ID + ":currency_player", 10)) {
+                            CompoundTag coinsNbt = attachments.getCompound(SGEconomyMod.MOD_ID + ":currency_player");
+                            internalBalance = net.sirgrantd.sg_economy.internal.validation.CurrencyDataValidator.getInstance().parseAndMigrateNbt(coinsNbt);
                         }
+                    }
+
+                    if (internalBalance == 0L) {
+                        internalBalance = net.sirgrantd.sg_economy.internal.validation.CurrencyDataValidator.getInstance().parseAndMigrateNbt(nbt);
+                    }
+
+                    if (isDecimalSystem) {
+                        currency = internalBalance / 100.0;
+                    } else {
+                        currency = (double) internalBalance;
                     }
 
                     ranking.add(new PlayerCoinsInfo(name, currency));
@@ -286,7 +286,7 @@ public class SGEconomyCommand {
                     ? String.format("$%.2f", info.currency())
                     : String.format("$%d", (int) info.currency());
             arguments.getSource().sendSystemMessage(Component.literal(
-                    String.format("§6%d. §f%s: §a%s", i + 1, info.name(), valueStr)));
+                String.format("§6%d. §f%s: §a%s", i + 1, info.name(), valueStr)));
         }
 
         return 1;
@@ -294,32 +294,28 @@ public class SGEconomyCommand {
 
     @SubscribeEvent
     public static void registerCoinsCommand(RegisterCommandsEvent event) {
-        // Registramos sempre como DoubleArgumentType com o mínimo absoluto (0) ou
-        // (0.01).
-        // Qualquer validação específica de arredondamento/inteiros ocorre DURANTE a
-        // execução.
         event.getDispatcher().register(Commands.literal("coins")
 
                 .then(Commands.literal("add")
-                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                        .requires(source -> source.hasPermission(2))
                         .then(Commands.argument("players", EntityArgument.players())
                                 .then(Commands.argument("amount", DoubleArgumentType.doubleArg(0.01))
                                         .executes(SGEconomyCommand::addCurrency))))
 
                 .then(Commands.literal("set")
-                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                        .requires(source -> source.hasPermission(2))
                         .then(Commands.argument("players", EntityArgument.players())
                                 .then(Commands.argument("amount", DoubleArgumentType.doubleArg(0))
                                         .executes(SGEconomyCommand::setCurrency))))
 
                 .then(Commands.literal("remove")
-                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                        .requires(source -> source.hasPermission(2))
                         .then(Commands.argument("players", EntityArgument.players())
                                 .then(Commands.argument("amount", DoubleArgumentType.doubleArg(0.01))
                                         .executes(SGEconomyCommand::removeCurrency))))
 
                 .then(Commands.literal("get")
-                        .requires(Commands.hasPermission(Commands.LEVEL_ALL))
+                        .requires(source -> source.hasPermission(0))
                         .executes(arguments -> getCurrency(arguments, null))
                         .then(Commands.argument("player", EntityArgument.player())
                                 .executes(arguments -> {
@@ -328,7 +324,7 @@ public class SGEconomyCommand {
                                 })))
 
                 .then(Commands.literal("pay")
-                        .requires(Commands.hasPermission(Commands.LEVEL_ALL))
+                        .requires(source -> source.hasPermission(0))
                         .then(Commands.argument("target", EntityArgument.player())
                                 .then(Commands.argument("amount", DoubleArgumentType.doubleArg(0.01))
                                         .executes(SGEconomyCommand::payCurrency))))
@@ -336,7 +332,7 @@ public class SGEconomyCommand {
                 .then(Commands.literal("rank")
                         .executes(arguments -> rankCoins(arguments, 1))
                         .then(Commands.argument("page", IntegerArgumentType.integer(0))
-                                .requires(Commands.hasPermission(Commands.LEVEL_ALL))
+                                .requires(source -> source.hasPermission(0))
                                 .executes(arguments -> {
                                     int page = IntegerArgumentType.getInteger(arguments, "page");
                                     return rankCoins(arguments, page);

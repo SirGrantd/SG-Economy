@@ -17,6 +17,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import net.sirgrantd.celesthyd.api.CelesthydApi;
 import net.sirgrantd.sg_economy.internal.attachments.CurrencyPlayerAttachment;
+import net.sirgrantd.sg_economy.internal.attachments.LegacyCoinsBagAttachment;
 import net.sirgrantd.sg_economy.internal.config.ClientConfig;
 import net.sirgrantd.sg_economy.internal.config.ServerConfig;
 import net.sirgrantd.sg_economy.internal.network.payloads.SyncServerConfigS2C;
@@ -27,16 +28,29 @@ import net.sirgrantd.sg_economy.internal.validation.CurrencyDataValidator;
 public class SGEconomyMod {
         public static final Logger LOGGER = LogManager.getLogger(SGEconomyMod.class);
         public static final String MOD_ID = "sg_economy";
+        public static final String MG_COINS_ID = "magic_coins";
 
         public static final DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES = DeferredRegister
                         .create(NeoForgeRegistries.Keys.ATTACHMENT_TYPES, MOD_ID);
+
+        public static final DeferredRegister<AttachmentType<?>> LEGACY_MC_ATTACHMENT_TYPES = DeferredRegister
+                        .create(NeoForgeRegistries.Keys.ATTACHMENT_TYPES, MG_COINS_ID);
 
         public static final Supplier<AttachmentType<CurrencyPlayerAttachment>> CURRENCY_PLAYER = ATTACHMENT_TYPES
                         .register("currency_player", () -> AttachmentType
                                         .serializable(() -> new CurrencyPlayerAttachment()).copyOnDeath().build());
 
+        public static final Supplier<AttachmentType<LegacyCoinsBagAttachment>> LEGACY_SG_COINS_BAG = ATTACHMENT_TYPES
+                        .register("coins_in_bag", () -> AttachmentType
+                                        .serializable(LegacyCoinsBagAttachment::new).build());
+
+        public static final Supplier<AttachmentType<LegacyCoinsBagAttachment>> LEGACY_MAGIC_COINS_BAG = LEGACY_MC_ATTACHMENT_TYPES
+                        .register("coins_in_bag", () -> AttachmentType
+                                        .serializable(LegacyCoinsBagAttachment::new).build());
+
         public SGEconomyMod(IEventBus eventBus, ModContainer modContainer) {
                 ATTACHMENT_TYPES.register(eventBus);
+                LEGACY_MC_ATTACHMENT_TYPES.register(eventBus);
 
                 eventBus.addListener(SGEconomyMod::onCommonSetupEvent);
 

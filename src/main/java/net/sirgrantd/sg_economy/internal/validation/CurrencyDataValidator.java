@@ -6,6 +6,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.sirgrantd.sg_economy.SGEconomyMod;
 import net.sirgrantd.sg_economy.api.validation.ICurrencyDataValidator;
 import net.sirgrantd.sg_economy.internal.attachments.CurrencyPlayerAttachment;
+import net.sirgrantd.sg_economy.internal.attachments.LegacyCoinsBagAttachment;
 
 public class CurrencyDataValidator implements ICurrencyDataValidator {
 
@@ -94,9 +95,34 @@ public class CurrencyDataValidator implements ICurrencyDataValidator {
         boolean modified = false;
         long migratedBalance = 0L;
 
+        // 1. Check for legacy NeoForge Data Attachments (magic_coins:coins_in_bag & sg_economy:coins_in_bag)
+        if (player.hasData(SGEconomyMod.LEGACY_MAGIC_COINS_BAG)) {
+            LegacyCoinsBagAttachment legacy = player.getData(SGEconomyMod.LEGACY_MAGIC_COINS_BAG);
+            if (legacy != null) {
+                long found = legacy.getMigratedBalance();
+                if (found > migratedBalance) {
+                    migratedBalance = found;
+                }
+            }
+            player.removeData(SGEconomyMod.LEGACY_MAGIC_COINS_BAG);
+            modified = true;
+        }
+
+        if (player.hasData(SGEconomyMod.LEGACY_SG_COINS_BAG)) {
+            LegacyCoinsBagAttachment legacy = player.getData(SGEconomyMod.LEGACY_SG_COINS_BAG);
+            if (legacy != null) {
+                long found = legacy.getMigratedBalance();
+                if (found > migratedBalance) {
+                    migratedBalance = found;
+                }
+            }
+            player.removeData(SGEconomyMod.LEGACY_SG_COINS_BAG);
+            modified = true;
+        }
+
         CompoundTag persistentData = player.getPersistentData();
 
-        // 1. Check for legacy tags directly in the player's persistent data
+        // 2. Check for legacy tags directly in the player's persistent data
         for (String key : LEGACY_TAG_KEYS) {
             if (persistentData.contains(key)) {
                 if (persistentData.contains(key, Tag.TAG_COMPOUND)) {
